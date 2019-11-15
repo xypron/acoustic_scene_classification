@@ -1,0 +1,254 @@
+<html>
+<head>
+<title>Darling were are you?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="default.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+    inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true,
+        processEnvironments: true
+    },
+    // Center justify equations in code and markdown cells. Elsewhere
+    // we use CSS to left justify single line equations in code cells.
+    displayAlign: 'left',
+    "HTML-CSS": {
+        styles: {'.MathJax_Display': {"margin": 0}},
+        linebreaks: { automatic: true }
+    }
+});
+</script>
+</head>
+<body>
+<body id="body">
+<div id="container">
+  <div id="header">
+    <div id="logo">
+    <img src="xypron100.png" width="145" height="100" alt="Xypron Logo">
+    Darling, where are you?
+    </div>
+  </div>
+  <div id="nav" itemprop="breadcrumb">
+    <a href="https://www.xypron.de">Xypron</a> &gt;
+    Darling, where are you?
+  </div>
+  <div id="main">
+    <img src="where.jpg" style="overflow:auto;float:right;width:30em;max-width:50%">
+    <h1 id="Acoustic-scene-classification">Acoustic scene classification</h1>
+    <p>"Darling, where are you?" may sound a bit catchy but it describes well
+    what acoustic scene classification is about.<p>
+    <p>When interacting with mobile devices we expect relevant information to be
+    presented with a minimum of input effort. What is relevant depends on the
+    context in which we are acting.</p>
+    <p>If we are requesting a route information while sitting at a bus stop we
+    most probably are looking for directions for travel via a bus, while at a
+    railway station we most probably are looking for a train connection.</p>
+    <p>One possibility for a device to identify the context is via geolocation
+    information. But this information may not be available inside buildings.
+    An alternative approach is the analysis of ambient noise. This approach is
+    referred to by the term acoustic scene classification.</p>
+    <p><em>Acoustic scene classification (ACS) describes the "capability of a
+    human or an artificial system to understand an audio context, either from an
+    on-line stream or from a recording." (<a
+    href="http://www.cs.tut.fi/sgn/arg/dcase2016/documents/workshop/Valenti-DCASE2016workshop.pdf"
+    >http://www.cs.tut.fi/sgn/arg/dcase2016/documents/workshop/Valenti-DCASE2016workshop.pdf</a>)</em></p>
+    <p>This blog demonstrates how convolutional neural networks can be used for
+    the identification of settings in which an audio file was recorded. We will
+    be applying a pre-trained VGG-16 network with a custom classifier applied on
+    log-frequency power-spectrograms.</p>
+    <h1 id="Data-analysis-and-preparation">Data analysis and preparation</h1>
+    <p>This project uses recordings made available as part of the DCASE
+    (Detection and Classification of Acoustic Scenes and Events) 2019 challenge
+    (<a href="http://dcase.community/challenge2019/task-acoustic-scene-classification"
+    >http://dcase.community/challenge2019/task-acoustic-scene-classification</a>).
+    The TAU Urban Acoustic Scenes 2019 development dataset contains recordings
+    in 10 different settings (airport, indoor shopping mall, metro station,
+    pedestrian street, stree traffic, tram, bus, metro, park) recorded in 10
+    cities. Each recording is 10 seconds long. The data files can be downloaded
+    from <a href="https://zenodo.org/record/2589280"
+    >https://zenodo.org/record/2589280</a>.</p>
+    <p>There are a total of 14400 recordings with 1440 recordings for each of
+    the 10 settings.<p>
+    <p>Here is a sample (street_pedestrian-lyon-1162-44650-a.wav).<p>
+    <audio controls>
+      <source src="street_pedestrian-lyon.mp3" type="audio/mpeg">
+      Your browser does not support the audio tag.
+    </audio><br />
+    <h2 id="Spectrograms">Spectrograms</h2>
+    <p>To analyze the audio files we can transform them into spectrograms (cf.
+    <a href="https://en.wikipedia.org/wiki/Spectrogram">https://en.wikipedia.org/wiki/Spectrogram</a>).
+    These show the frequency distribution for subsequent short time intervals.</p>
+    <h3 id="Mel-spectrograms">Mel spectrograms</h3>
+    <p>A popular form of spectrograms are Mel spectrograms. The Mel scale is
+    based on what humans perceive as equal pitch differences. The Mel scale
+    defines how the frequency axis is scaled:</p>
+    <p><script type="math/tex; mode=display" id="MathJax-Element-1"
+    >m = 2595 \log_{10}\left(1 + \frac{f}{700}\right)</script></p>
+    <p>The result of the scaling is that for high frequencies the scale is
+    proportional to the logarithm of the frequency while low frequency
+    (especially below 700 Hz) are compressed.</p>
+    <p>This scale is widely used for speech analysis.</p>
+    <p>In a power spectrogram the strength the amplitude of the frequncies is
+    shown on logarithmic scale (in Decibel).</p>
+    <p>Here is the Mel power spectrogram for the sound file above.</p>
+    <p><img src="mel_powerspectrum.png"></p>
+    <p>Looking at the spectrogram we find:</p>
+    <ul>
+    <li>Most of the audio power is concentrated on low frequencies.</li>
+    <li>A lot of the structure that we can see is in the low frequencies.</li>
+    <li>High frequencies seem to be filtered out.</li>
+    </ul>
+    <p>Ambiant sound can contain a lot of low frequency sounds, e.g.</p>
+    <ul>
+    <li>Automobile motors run at 600 - 6000 rpm. With four cylinders that
+    results in a 40 - 400 Hz exhaust frequency.</li>
+    <li>Ventilators typically run at 750 - 3000 rpm.</li>
+    </ul>
+    <p>These are the frequencies that are compressed by the Mel scale.</p>
+    <p>When the running speed of machines is changed this will move much of the
+    sound spectrum by the same factor. While the Mel scale distorts this shift
+    for low frequencies the spectrum would be simply translated along the
+    frequency axis on a pure logarithimic scale by the same distance.</p>
+    <p><strong>So using a logarithmic scale for the the analysis seems more
+    appropriate.</strong></p>
+    <h3 id="Log-frequency-spectrograms">Log-frequency spectrograms</h3>
+    <p>Here is the log-frequency power spectrogram (also referred to as
+    constant-Q power spectrogram) for the audio file above:</p>
+    <p><img src="constant_q_power_spectrum.png"></p>
+    <p>This looks more appropriate for our classification task:</p>
+    <ul>
+    <li>With the log-frequency spectrogram the structure of low frequency sound
+    is clearly visible.</li>
+    <li>The audio power is more evenly distributed over the frequency
+    intervals.</li>
+    </ul>
+    <p>Yet high frequencies are still underrepresented.</p>
+    <h2 id="Pre-emphasis">Pre-emphasis</h2>
+    <p>The high frequencies can be emphasized using a filter</p>
+    <p><script type="math/tex; mode=display" id="MathJax-Element-1"
+    >f(x) = x + \frac{\dot{x}}{\alpha}</script></p>
+    <p>(as suggested by Haytham Fayek,
+    <a href="https://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html"
+    >Speech Processing for Machine Learning: Filter banks,
+    Mel-Frequency Cepstral Coefficients (MFCCs) and What's In-Between</a>).</p>
+    <p>With &alpha; = 1485 Hz the sound sample sounds like this:<p>
+    <audio controls>
+      <source src="preemphasis.mp3" type="audio/mpeg">
+      Your browser does not support the audio tag.
+    </audio><br />
+    <p>And the power is much more evenly distributed the frequencies:</p>
+    <p><img src="preemphasis.png"></p>
+    <h1 id="Modeling">Modeling</h1>
+    <p>For feeding a neural network the spectrograms can be saved as black and
+    white images with the brightness representing the logarithm of the power.</p>
+    <p><img src="preemphasis_bw.png"></p>
+    <p>The number of recordings per setting are rather small in our data set. To
+    avoid over-fitting data augmentation should be applied.</p>
+    <h2 id="Data-augmentation">Data augmentation</h2>
+    <p>For image data a large variety of transformations can be used for
+    augmentation. These include for instance random resized cropping,
+    rotations, and flipping (for more transformations see <a
+    href="https://github.com/aleju/imgaug"
+    >https://github.com/aleju/imgaug</a>).</p>
+    <p>Not all make sense for spectrograms, e.g. rotations. Reasonable
+    transformations are:</p>
+    <ul>
+    <li>changes in pitch</li>
+    <li>changes in tempo</li>
+    <li>translation in time (aka. time warping)</li>
+    </ul>
+    <p>In <a href="https://ai.google/research/pubs/pub48482/"
+    >SpecAugment: A Simple Augmentation Method for Automatic Speech
+    Recognition</a>, Zoph et.al suggest to randomly mask frequency bands
+    for the purpose of augmentation.</p>
+    <p><img src="frequency_band_masking.png"></p>
+    <h2 id="Neural network">Neural network</h2>
+    For image recognition pre-trained networks can be used. The VGG16 model
+    (Karen Simonyan, Andrew Zisserman, <a href="https://arxiv.org/abs/1409.1556"
+    >Very Deep Convolutional Networks for Large-Scale Image Recognition</a> was
+    chosen. A classifier with one hidden layer of 512 nodes was added and only
+    the classifier parameters were trained. The data set had been split using a
+    60:20:20 ratio per setting-city combination. The Adam optimizer was applied
+    with a .001 learning rate. Both autgemtation techniques describe above were
+    used. 10 subsequent epochs not improving the accurary
+    on the validation set were used as the termination criterion.
+    <h1 id="Results">Results</h1>
+    <p>A test accuracy of 69 % was achieved.</p>
+    <p>The confusion matrix shows that the separation of the different audio
+    settings differs a lot. While the bus setting was well recognized the public
+    square and pedestrian street settings were not easily separable.</p>
+    <table>
+    <tr style="writing-mode: vertical-rl">
+    <th></th>
+    <th>airport</th>
+    <th>bus</th>
+    <th>metro</th>
+    <th>metro station</th>
+    <th>park</th>
+    <th>public square</th>
+    <th>shopping mall</th>
+    <th>pedestrian street</th>
+    <th>street traffic</th>
+    <th>tram</th>
+    </tr>
+    <tr><td>airport</td><td>215</td><td>0</td><td>0</td><td>3</td><td>1</td><td>17</td><td>30</td><td>17</td><td>6</td><td>1</td></tr>
+    <tr><td>bus</td><td>0</td><td>256</td><td>2</td><td>4</td><td>1</td><td>1</td><td>1</td><td>1</td><td>3</td><td>21</td></tr>
+    <tr><td>metro</td><td>6</td><td>15</td><td>153</td><td>33</td><td>1</td><td>9</td><td>0</td><td>1</td><td>3</td><td>68</td></tr>
+    <tr><td>metro station</td><td>32</td><td>6</td><td>17</td><td>171</td><td>4</td><td>18</td><td>11</td><td>12</td><td>4</td><td>15</td></tr>
+    <tr><td>park</td><td>0</td><td>1</td><td>0</td><td>1</td><td>252</td><td>21</td><td>0</td><td>5</td><td>9</td><td>1</td></tr>
+    <tr><td>public square</td><td>25</td><td>1</td><td>1</td><td>3</td><td>26</td><td>165</td><td>15</td><td>29</td><td>22</td><td>3</td></tr>
+    <tr><td>shopping mall</td><td>51</td><td>0</td><td>0</td><td>7</td><td>0</td><td>16</td><td>197</td><td>19</td><td>0</td><td>0</td></tr>
+    <tr><td>pedestrian street</td><td>35</td><td>0</td><td>1</td><td>8</td><td>10</td><td>63</td><td>19</td><td>146</td><td>6</td><td>1</td></tr>
+    <tr><td>street traffic</td><td>3</td><td>1</td><td>0</td><td>3</td><td>20</td><td>26</td><td>1</td><td>4</td><td>228</td><td>4</td></tr>
+    <tr><td>tram</td><td>3</td><td>10</td><td>29</td><td>18</td><td>3</td><td>6</td><td>0</td><td>4</td><td>1</td><td>216</td></tr>
+    </table>
+    <p></p>
+    <p>This model now can be used for predictions. Can you identify the setting
+    of the following recording by listening?</p>
+    <audio controls>
+      <source src="bus-milan.mp3" type="audio/mpeg">
+      Your browser does not support the audio tag.
+    </audio><br />
+    <p></p>
+    <p>This is the prediction by the model:</p>
+    <p><img src="prediction.png"></p>
+    <p>The model itself can be found in
+    <a href="https://github.com/xypron/acoustic_scene_classification"
+    >https://github.com/xypron/acoustic_scene_classification</a>.
+    <h1 id="Conclusion">Conclusion</h1>
+    <p>A workflow for classifying ambiant sound was demonstrated:</p>
+    <ul>
+    <li>correcting sound quality by using a pre-emphasis filter</li>
+    <li>convert sound files to spectrograms</li>
+    <li>split the dataset into training, validation, and testing data</li>
+    <li>train a convolutional neural network using data augmentation</li>
+    <li>use the trained network for prediction</li>
+    </ul>
+    <p>Though a network was used that is not specifically built for this
+    classification task respectable accuracy rates were be achieved.</p>
+    <p>Directions for further investigation could be</p>
+    <ul>
+    <li>a grid search to optimize the parameters of the augmentation transforms</li>
+    <li>testing further augmentation techniques like adding noise</li>
+    <li>design of a more specific neural network.</li>
+    </ul>
+  </div>
+  <div id="links">
+  <a href="#Acoustic-scene-classification">Acoustic scene classification</a><br />
+  <a href="#Data-analysis-and-preparation">Data analysis and preparation</a><br /><ul>
+  <li><a href="#Spectrograms">Spectrograms</a><br /><ul>
+  <li><a href="#Mel-spectrograms">Mel spectrograms</li>
+  <li><a href="#Log-frequency-spectrograms">Log-frequency spectrograms</a></li>
+  </ul>
+  <li><a href="Pre-emphasis">Pre-emphasis</a></li></ul>
+  <a href="Modeling">Modeling</a><br />
+  <a href="Conclusion">Conclusion</a>
+  </div>
+  <div id="footer">Heinrich Schuchardt, 2019-11-13</div>
+</div>
+</body>
+</html>
