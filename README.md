@@ -38,7 +38,7 @@ mentioned in the "Software used" chapter installed.
 
 Download the raw data
 
-    cd data/; download.sh; cd ..
+    cd data/ && ./download.sh && cd ..
 
 Convert the data to spectrograms
 
