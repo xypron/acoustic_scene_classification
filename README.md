@@ -51,11 +51,13 @@ Download the raw data (34 GiB) and extract the zip files
 
 Convert the data to spectrograms
 
+    mkdir -p data/spectrograms/
     python convert.py data/TAU-urban-acoustic-scenes-2019-development/audio/ \
     data/spectrograms/
 
 Split the data into training, validation, and test sub-sets
 
+    mkdir -p data/splitted/
     python split.py data/spectrograms/ data/splitted/
 
 Now all prerequites are set up and you can run the Juypter notebook
