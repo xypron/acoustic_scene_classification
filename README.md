@@ -15,8 +15,8 @@ ambient sound.
 This project demonstrates how a convoluted neural network can be used for
 acoustic scene classification.
 
-The main file to look at is the Jupyter notebook
-acoustic\_scene\_classification.ipynb
+The main files to look at are the Jupyter notebook
+acoustic\_scene\_classification.ipynb and the blog in blog/index.html.
 
 Files
 =====
@@ -34,9 +34,18 @@ Usage
 =====
 
 It is assumed that you are running in a Anaconda environment with the packages
-mentioned in the "Software used" chapter installed.
+mentioned in the "Software used" chapter installed and are using a Posix
+operating system, e.g. Debian Buster.
 
-Download the raw data
+You will need at least 85 GiB free disk space for the data. Check it with
+
+    df .
+
+You will need at least 6 GiB video memory. Check it with
+
+    nvidia-smi
+
+Download the raw data (34 GiB) and extract the zip files
 
     cd data/ && ./download.sh && cd ..
 
@@ -49,13 +58,15 @@ Split the data into training, validation, and test sub-sets
 
     python split.py data/spectrograms/ data/splitted/
 
-To run the Juypter notebook
+Now all prerequites are set up and you can run the Juypter notebook
 
     jupyter notebook
 
-Train the neural network
+Train the neural network. This will take several hours.
 
     python train.py --epochs 64 data/splitted
+
+Or use the checkpoint created by running the Jupyter notebook.
 
 After the network is trained a checkpoint file 'checkpoint.pt' is saved. This
 file is needed as prediction. By default the file is saved in the current
@@ -83,6 +94,8 @@ Software used
 
 These are the software versions that were used:
 
+* Debian Buster Bullseye
+* CUDA 10.1
 * Python 3.7.4
 * conda 4.7.12
 * ipython 7.8.0
@@ -103,6 +116,6 @@ License
 The code is published under
 [LGPL-v2]: https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html
 
-Documentation is published under the
+The documentation is published under the
 [CC BY-SA 4.0]: http://creativecommons.org/licenses/by-sa/4.0/
 license
