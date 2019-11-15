@@ -83,7 +83,7 @@ To show all available parameters of train.py you can use
 The checkpoint can now be used to make predictions by applying the trained model
 to a spectrogram:
 
-    python predict data/spectrograms/bus/milan/1115-42136-a.png checkpoint.pt
+    python predict.py data/spectrograms/bus/milan/1115-42136-a.png checkpoint.pt
 
 The console output shows the propabilities of the top five categories.
 
