@@ -166,7 +166,7 @@ MathJax.Hub.Config({
     Recognition</a>, Zoph et.al suggest to randomly mask frequency bands
     for the purpose of augmentation.</p>
     <p><img src="frequency_band_masking.png"></p>
-    <h2 id="Neural network">Neural network</h2>
+    <h2 id="Neural_network">Neural network</h2>
     For image recognition pre-trained networks can be used. The VGG16 model
     (Karen Simonyan, Andrew Zisserman, <a href="https://arxiv.org/abs/1409.1556"
     >Very Deep Convolutional Networks for Large-Scale Image Recognition</a> was
@@ -176,8 +176,29 @@ MathJax.Hub.Config({
     with a .001 learning rate. Both autgemtation techniques describe above were
     used. 10 subsequent epochs not improving the accurary
     on the validation set were used as the termination criterion.
+    <h2 id="Hyper_parameter_tuning">Hyper parameter tuning</h2>
+    A grid search was used to find good values for
+    <ul>
+    <li>the length of the time sub-interval used for time warping</li>
+    <li>the width of the frequency band to be randomly masked</li>
+    </ul>
+    To get an estimate of the margin of error each point of the search grid was
+    evaluated three times with different random seeds.
+    <table>
+    <tr><th></th><th colspan="3">frequency band masked</th>
+    <tr><th>time window</th></td><td>0 %</td><td>10 %</td><td>20 %</td></tr>
+    <tr><td>3 s</td><td>60.2&plusmn;0.8</td><td>58.7&plusmn;0.2</td><td>58.2&plusmn;0.6</td></tr>
+    <tr><td>5 s</td><td>71.2&plusmn;0.8</td><td>70.8&plusmn;0.0</td><td>69.5&plusmn;0.8</td></tr>
+    <tr><td>7 s</td><td>63.6&plusmn;1.7</td><td>62.9&plusmn;2.4</td><td>64.6&plusmn;0.7</td></tr>
+    The standard deviation values in table above should be taken with caution as
+    they are based only on three values.
+    </table>
     <h1 id="Results">Results</h1>
-    <p>A test accuracy of 69 % was achieved.</p>
+    <p>Augmentation via frequency band masking was not beneficial for
+    accuracy.</p>
+    <p>An accuracy of 69.7 % for the test set was achieved using the tuned
+    parameters (a time windows of 5 seconds for time warping withing the 10
+    second recordings, no frequency band masking).</p>
     <p>The confusion matrix shows that the separation of the different audio
     settings differs a lot. While the bus setting was well recognized the public
     square and pedestrian street settings were not easily separable.</p>
@@ -195,16 +216,16 @@ MathJax.Hub.Config({
     <th>street traffic</th>
     <th>tram</th>
     </tr>
-    <tr><td>airport</td><td>215</td><td>0</td><td>0</td><td>3</td><td>1</td><td>17</td><td>30</td><td>17</td><td>6</td><td>1</td></tr>
-    <tr><td>bus</td><td>0</td><td>256</td><td>2</td><td>4</td><td>1</td><td>1</td><td>1</td><td>1</td><td>3</td><td>21</td></tr>
-    <tr><td>metro</td><td>6</td><td>15</td><td>153</td><td>33</td><td>1</td><td>9</td><td>0</td><td>1</td><td>3</td><td>68</td></tr>
-    <tr><td>metro station</td><td>32</td><td>6</td><td>17</td><td>171</td><td>4</td><td>18</td><td>11</td><td>12</td><td>4</td><td>15</td></tr>
-    <tr><td>park</td><td>0</td><td>1</td><td>0</td><td>1</td><td>252</td><td>21</td><td>0</td><td>5</td><td>9</td><td>1</td></tr>
-    <tr><td>public square</td><td>25</td><td>1</td><td>1</td><td>3</td><td>26</td><td>165</td><td>15</td><td>29</td><td>22</td><td>3</td></tr>
-    <tr><td>shopping mall</td><td>51</td><td>0</td><td>0</td><td>7</td><td>0</td><td>16</td><td>197</td><td>19</td><td>0</td><td>0</td></tr>
-    <tr><td>pedestrian street</td><td>35</td><td>0</td><td>1</td><td>8</td><td>10</td><td>63</td><td>19</td><td>146</td><td>6</td><td>1</td></tr>
-    <tr><td>street traffic</td><td>3</td><td>1</td><td>0</td><td>3</td><td>20</td><td>26</td><td>1</td><td>4</td><td>228</td><td>4</td></tr>
-    <tr><td>tram</td><td>3</td><td>10</td><td>29</td><td>18</td><td>3</td><td>6</td><td>0</td><td>4</td><td>1</td><td>216</td></tr>
+    <tr><td>airport</td><td>217</td><td>0</td><td>3</td><td>3</td><td>0</td><td>22</td><td>34</td><td>11</td><td>0</td><td>0</td></tr>
+    <tr><td>bus</td><td>1</td><td>255</td><td>21</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td><td>10</td></tr>
+    <tr><td>metro</td><td>6</td><td>15</td><td>202</td><td>21</td><td>1</td><td>2</td><td>0</td><td>1</td><td>0</td><td>41</td></tr>
+    <tr><td>metro station</td><td>33</td><td>4</td><td>39</td><td>158</td><td>0</td><td>15</td><td>14</td><td>11</td><td>5</td><td>11</td></tr>
+    <tr><td>park</td><td>4</td><td>0</td><td>0</td><td>0</td><td>244</td><td>27</td><td>0</td><td>6</td><td>6</td><td>3</td></tr>
+    <tr><td>public square</td><td>18</td><td>1</td><td>1</td><td>6</td><td>13</td><td>182</td><td>12</td><td>42</td><td>15</td><td>0</td></tr>
+    <tr><td>shopping mall</td><td>37</td><td>0</td><td>3</td><td>9</td><td>0</td><td>10</td><td>210</td><td>19</td><td>1</td><td>1</td></tr>
+    <tr><td>pedestrian street</td><td>35</td><td>1</td><td>2</td><td>9</td><td>5</td><td>58</td><td>19</td><td>152</td><td>6</td><td>2</td></tr>
+    <tr><td>street traffic</td><td>2</td><td>1</td><td>0</td><td>4</td><td>14</td><td>48</td><td>1</td><td>10</td><td>209</td><td>1</td></tr>
+    <tr><td>tram</td><td>4</td><td>21</td><td>54</td><td>13</td><td>3</td><td>1</td><td>0</td><td>3</td><td>1</td><td>190</td></tr>
     </table>
     <p></p>
     <p>This model now can be used for predictions. Can you identify the setting
@@ -232,7 +253,8 @@ MathJax.Hub.Config({
     classification task respectable accuracy rates were be achieved.</p>
     <p>Directions for further investigation could be</p>
     <ul>
-    <li>a grid search to optimize the parameters of the augmentation transforms</li>
+    <li>an extended grid search to further optimize the parameters of the
+    augmentation transforms</li>
     <li>testing further augmentation techniques like adding noise</li>
     <li>design of a more specific neural network.</li>
     </ul>
@@ -244,8 +266,13 @@ MathJax.Hub.Config({
   <li><a href="#Mel-spectrograms">Mel spectrograms</li>
   <li><a href="#Log-frequency-spectrograms">Log-frequency spectrograms</a></li>
   </ul>
-  <li><a href="Pre-emphasis">Pre-emphasis</a></li></ul>
-  <a href="Modeling">Modeling</a><br />
+  <li><a href="#Pre-emphasis">Pre-emphasis</a></li></ul>
+  <a href="#Modeling">Modeling</a><br /><ul>
+  <li><a href="#Data-augmentation">Data augmentation</a></li>
+  <li><a href="#Neural_network">Neural network</a></li>
+  <li><a href="#Hyper_parameter_tuning">Hyper parameter tuning</a></li>
+  </ul>
+  <a href="Results">Results</a>
   <a href="Conclusion">Conclusion</a>
   </div>
   <div id="footer">Heinrich Schuchardt, 2019-11-13</div>
