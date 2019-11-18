@@ -15,11 +15,29 @@ ambient sound.
 This project demonstrates how a convoluted neural network can be used for
 acoustic scene classification.
 
-The main files to look at are the Jupyter notebook
-acoustic\_scene\_classification.ipynb and the blog in blog/index.html.
+Recordings made available as part of the DCASE (Detection and Classification o
+Acoustic Scenes and Events) 2019 challenge are used as input data. These
+comprise 14400 audio files recorded in 10 settings in 10 different cities.
+
+The recordings are converted to log-frequency short time power spectrograms.
+
+Results
+=======
+
+Two different augmentation methods were used. While time warping proved
+benefical random masking of frequency bands showed a negative effect.
+
+After applying a hyperparameter optimization settings where identified with
+an accuracy of 69.7 % for the validation data set.
+
+Hence acoustic scene classification seems to be a feasible approach for
+providing context dependent information.
 
 Files
 =====
+
+The main files to look at are the Jupyter notebook
+acoustic\_scene\_classification.ipynb and the blog in blog/index.html.
 
 * acoustic\_scene\_classification.ipynb - Jupyter notebook
 * acoustic\_scene\_classification.html - HTML export of the Jupyter notebook
